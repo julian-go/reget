@@ -2,7 +2,7 @@
 [![Crates.io](https://img.shields.io/crates/v/reget)](https://crates.io/crates/reget)
 ![License](https://img.shields.io/badge/license-MIT-blue) 
 
-A simple library for extracting from HTML documents using structured data (JSON-LD) embedded within.
+A simple library for extracting a [recipe](src/model.rs) from HTML documents using structured data (JSON-LD) embedded within.
 
 This library assumes the document follows the [schema.org recipe specification](https://schema.org/Recipe).
 
