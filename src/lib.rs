@@ -1,3 +1,33 @@
+//! # Recipe Extraction from HTML documents
+//!
+//! `reget` provides a [single function](parse_recipe) to extract a [recipe](Recipe) from HTML documents
+//! using structured data (JSON-LD) embedded within.
+//!
+//! This library assumes the document follows the [schema.org recipe specification](https://schema.org/Recipe).
+//!
+//! ## Example
+//!
+//! ```
+//! use reget::parse_recipe;
+//!
+//! let html = r#"
+//! <!DOCTYPE html>
+//! <html lang="en">
+//! <script type="application/ld+json">
+//! {
+//!   "@type": "Recipe",
+//!   "name": "Delicious Cookies",
+//!   "author": "Lorem Ipsum",
+//!   "recipeIngredient": ["2 cups flour", "1 cup sugar"],
+//!   "recipeInstructions": "Mix ingredients and bake."
+//! }
+//! </script>
+//! </html>
+//! "#;
+//!
+//! let recipe = parse_recipe(html).unwrap();
+//! ```
+
 mod constants;
 mod model;
 
@@ -11,28 +41,18 @@ const JSON_LD_SELECTOR: &str = r#"script[type="application/ld+json"]"#;
 const RECIPE_TYPE: &str = "Recipe";
 const HOW_TO_SECTION_TYPE: &str = "HowToSection";
 
-pub fn from_html(html: &str) -> Option<Recipe> {
+/// Parses the [recipe](Recipe) from the given HTML document. Will return None if no
+/// linked data is found in the document.
+///
+/// This function will only extract the first recipe it finds and only if it follows
+/// [schema.org recipe specification](https://schema.org/Recipe).
+///
+/// For an example see [here](crate).
+pub fn parse_recipe(html: &str) -> Option<Recipe> {
     let json = extract_recipe_json(html)?;
     Some(extract_recipe(&json))
 }
 
-/// This function tries to extract the recipe from the given json document according
-/// to the schema.org definition (https://schema.org/Recipe). It looks for
-///
-/// "recipeIngredient"
-///
-/// This is expected to be a either:
-/// - an array of ingredients or
-/// - a single ingredient in text form.
-///
-/// "recipeInstructions"
-///
-/// This is expectted to be either:
-/// - a single big step in text form
-/// - an array of @type HowToStep with a corresponding "text" field
-/// - an array of @type HowToSection. In this case each section contains an array of
-///   @type HowToStep
-///
 fn extract_recipe(json: &Map<String, Value>) -> Recipe {
     Recipe {
         name: json
@@ -55,7 +75,7 @@ fn extract_recipe(json: &Map<String, Value>) -> Recipe {
     }
 }
 
-/// Looks for type="application/ld+json" in the provided html with @type as Recipe.
+/// Looks for `type="application/ld+json"` in the provided html with `"@type": Recipe`.
 fn extract_recipe_json(html: &str) -> Option<Map<String, Value>> {
     let sel = Selector::parse(JSON_LD_SELECTOR).unwrap();
     let document = Html::parse_document(html);
@@ -76,8 +96,7 @@ fn extract_recipe_json(html: &str) -> Option<Map<String, Value>> {
     None
 }
 
-/// Tries to recursively find a recipe by looking for the @type = Recipe.
-/// The json can be an array of linked data.
+/// Tries to recursively find a recipe by looking for the tag `"@type": Recipe`.
 fn find_recipe_in_value(value: Value) -> Option<Map<String, Value>> {
     match value {
         Value::Object(obj) => {
@@ -102,7 +121,7 @@ fn find_recipe_in_value(value: Value) -> Option<Map<String, Value>> {
     None
 }
 
-/// Verifies that the obj contains a @type = Recipe tag.
+/// Verifies that the obj contains the tag `"@type": Recipe`.
 fn is_recipe_type(obj: &serde_json::Map<String, Value>) -> bool {
     match obj.get(LdFields::TYPE) {
         Some(Value::String(s)) => s == RECIPE_TYPE,
@@ -113,7 +132,7 @@ fn is_recipe_type(obj: &serde_json::Map<String, Value>) -> bool {
     }
 }
 
-/// Returns the author from the json struct according to the schema.org definition
+/// Extracts the author
 ///
 /// It deals with:
 ///     - "author": "first last",
@@ -121,7 +140,7 @@ fn is_recipe_type(obj: &serde_json::Map<String, Value>) -> bool {
 ///     - "author": [ "first last", "first last" ]
 ///     - "author": [ { "name": "first last" }, { "name": "first last" } ]
 ///
-/// For arrays of authors it returns them as a comma seprated string
+/// For arrays of authors it returns them as a comma separated string
 fn extract_author(value: &serde_json::Value) -> Option<String> {
     match value {
         // If the field is just a string, return the string
@@ -147,7 +166,7 @@ fn extract_author(value: &serde_json::Value) -> Option<String> {
     }
 }
 
-/// Returns the ingredients from the json struct according to the schema.org definition
+/// Extracts the ingredients
 ///
 /// It deals with:
 ///     - "recipeIngredient": "ingredient",
@@ -166,7 +185,7 @@ fn extract_ingredients(value: &serde_json::Value) -> Vec<Ingredient> {
     }
 }
 
-/// Returns the instructions from the json struct according to the schema.org definition.
+/// Extracts the instructions
 ///
 /// It deals with:
 ///     - "recipeInstructions": "step text"
@@ -202,6 +221,7 @@ fn extract_instructions(value: &serde_json::Value) -> Vec<HowToSection> {
     }
 }
 
+/// Extracts a [HowToSection]
 fn extract_section(value: &serde_json::Value) -> Option<HowToSection> {
     if let Value::Object(obj) = value {
         let name = obj
@@ -218,6 +238,7 @@ fn extract_section(value: &serde_json::Value) -> Option<HowToSection> {
     }
 }
 
+/// Extracts a [HowToStep]
 fn extract_step(value: &serde_json::Value) -> Vec<HowToStep> {
     match value {
         Value::Array(arr) => arr.iter().flat_map(extract_step).collect(),
@@ -231,6 +252,7 @@ fn extract_step(value: &serde_json::Value) -> Vec<HowToStep> {
     }
 }
 
+/// Determines if the value is a [HowToSection] object.
 fn is_how_to_section_obj(value: &serde_json::Value) -> bool {
     matches!(
         value,
@@ -249,7 +271,7 @@ mod tests {
         #[test]
         fn basic_1() {
             let html = include_str!("../tests/fixtures/basic_1.html");
-            let recipe = from_html(html).unwrap();
+            let recipe = parse_recipe(html).unwrap();
             assert_eq!(
                 recipe,
                 Recipe {
@@ -268,7 +290,7 @@ mod tests {
         #[test]
         fn basic_2() {
             let html = include_str!("../tests/fixtures/basic_2.html");
-            let recipe = from_html(html).unwrap();
+            let recipe = parse_recipe(html).unwrap();
             assert_eq!(
                 recipe,
                 Recipe {
@@ -287,7 +309,7 @@ mod tests {
         #[test]
         fn basic_3() {
             let html = include_str!("../tests/fixtures/basic_3.html");
-            let recipe = from_html(html).unwrap();
+            let recipe = parse_recipe(html).unwrap();
             assert_eq!(
                 recipe,
                 Recipe {
@@ -306,7 +328,7 @@ mod tests {
         #[test]
         fn basic_4() {
             let html = include_str!("../tests/fixtures/basic_4.html");
-            let recipe = from_html(html).unwrap();
+            let recipe = parse_recipe(html).unwrap();
             assert_eq!(
                 recipe,
                 Recipe {
@@ -331,7 +353,7 @@ mod tests {
         #[test]
         fn basic_5() {
             let html = include_str!("../tests/fixtures/basic_5.html");
-            let recipe = from_html(html).unwrap();
+            let recipe = parse_recipe(html).unwrap();
             assert_eq!(
                 recipe,
                 Recipe {

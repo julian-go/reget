@@ -1,5 +1,6 @@
 pub struct LdFields;
 
+/// Constants for JSON-LD fields used in the recipe schema
 impl LdFields {
     pub const TYPE: &'static str = "@type";
     pub const NAME: &'static str = "name";
