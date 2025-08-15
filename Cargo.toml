@@ -2,6 +2,9 @@
 name = "reget"
 version = "0.1.0"
 edition = "2024"
+description = "A simple recipe parser for html and json-ld"
+repository = "https://github.com/julian-go/reget"
+license = "MIT"
 
 [dependencies]
 scraper = "0.23.1"
