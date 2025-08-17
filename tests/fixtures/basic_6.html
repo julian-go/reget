@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="application/ld+json">
+        {
+            "@context": "http://schema.org",
+            "@type": "Recipe",
+            "name": "recipe_name",
+            "recipeIngredient": [
+                "ingredient_1",
+                "ingredient_2"
+            ],
+            "description": "description",
+            "recipeInstructions": [
+                "Step 1",
+                {
+                    "@type": "HowToStep",
+                    "name": "not a section",
+                    "text": "Step 2"
+                },
+                {
+                    "@type": "HowToSection",
+                    "name": "section_2",
+                    "itemListElement": [
+                        {
+                            "@type": "HowToStep",
+                            "text": "instruction_3"
+                        },
+                        {
+                            "@type": "HowToStep",
+                            "text": "instruction_4"
+                        }
+                    ]
+                }
+            ],
+            "author": {
+                "@type": "Person",
+                "name": "author_name"
+            }
+        }
+    </script>
+</head>
+
+</html>

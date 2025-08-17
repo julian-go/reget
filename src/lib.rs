@@ -203,6 +203,7 @@ fn extract_ingredients(value: &serde_json::Value) -> Vec<Ingredient> {
 ///     - "recipeInstructions": "step text"
 ///     - "recipeInstructions": [ "step1", "step2" ]
 ///     - "recipeInstructions": [ { "text": "step1" }, { "text": "step2" } ]
+///     - "recipeInstructions": [ { "text": "step1" }, { "@type": "HowToSection", "name": "...", "itemListElement": [...] } ]
 ///     - "recipeInstructions": [ { "@type": "HowToSection", "name": "...", "itemListElement": [...] }, ... ]
 ///
 /// For HowToSection objects, each section contains an array of steps.
@@ -211,15 +212,26 @@ fn extract_instructions(value: &serde_json::Value) -> Vec<HowToSection> {
     match value {
         // Array of sections or steps
         Value::Array(arr) => {
-            // If any item is a HowToSection, treat as sections
-            if arr.iter().any(is_how_to_section_obj) {
-                arr.iter().filter_map(extract_section).collect()
-            } else {
-                vec![HowToSection {
-                    name: None,
-                    steps: arr.iter().flat_map(extract_step).collect(),
-                }]
+            let mut result = Vec::new();
+            let mut current_section = HowToSection::default();
+
+            for item in arr {
+                if is_how_to_section_obj(item) {
+                    // Push the current section if it has steps before starting a new one
+                    if !current_section.steps.is_empty() {
+                        result.push(std::mem::take(&mut current_section));
+                    }
+                    current_section = extract_section(item).unwrap_or_default();
+                } else {
+                    current_section.steps.extend(extract_step(item));
+                }
             }
+
+            if !current_section.steps.is_empty() {
+                result.push(current_section);
+            }
+
+            result
         }
         // Single section object
         Value::Object(_) if is_how_to_section_obj(value) => {
@@ -377,6 +389,31 @@ mod tests {
                         HowToSection {
                             name: Some("section_1".into()),
                             steps: vec!["instruction_1".into(), "instruction_2".into()],
+                        },
+                        HowToSection {
+                            name: Some("section_2".into()),
+                            steps: vec!["instruction_3".into(), "instruction_4".into()],
+                        }
+                    ]
+                }
+            )
+        }
+
+        #[test]
+        fn basic_6() {
+            let html = include_str!("../tests/fixtures/basic_6.html");
+            let recipe = parse_recipe(html).unwrap();
+            assert_eq!(
+                recipe,
+                Recipe {
+                    name: Some("recipe_name".into()),
+                    author: Some("author_name".into()),
+                    description: Some("description".into()),
+                    ingredients: vec!["ingredient_1".into(), "ingredient_2".into()],
+                    how_to_sections: vec![
+                        HowToSection {
+                            name: None,
+                            steps: vec!["Step 1".into(), "Step 2".into()],
                         },
                         HowToSection {
                             name: Some("section_2".into()),
