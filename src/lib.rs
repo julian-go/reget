@@ -3,6 +3,8 @@
 //! `reget` provides a [single function](parse_recipe) to extract a [recipe](Recipe) from HTML documents
 //! using structured data (JSON-LD) embedded within.
 //!
+//! With the optional `markdown` feature, recipes can be [converted to a markdown string](MarkdownBuilder).
+//!
 //! This library assumes the document follows the [schema.org recipe specification](https://schema.org/Recipe).
 //!
 //! ## Example
@@ -26,6 +28,12 @@
 //! "#;
 //!
 //! let recipe = parse_recipe(html).unwrap();
+//!
+//! // And with the optional markdown feature    
+//! let md = recipe
+//!     .to_markdown()
+//!     .with_url("https://example.org/recipe")
+//!     .convert();
 //! ```
 
 mod constants;

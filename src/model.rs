@@ -36,6 +36,8 @@ pub type HowToStep = String;
 
 impl Recipe {
     #[cfg(feature = "markdown")]
+    /// Constructs a [MarkdownBuilder](crate::MarkdownBuilder) to convert this
+    /// recipe to markdown format
     pub fn to_markdown(&self) -> crate::MarkdownBuilder {
         crate::MarkdownBuilder::from(self)
     }
