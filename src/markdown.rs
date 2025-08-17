@@ -37,6 +37,7 @@ use std::fmt::Write;
 /// # Preparation
 ///
 /// Step 1 do xyz.
+///
 /// Do abc for step 2.
 /// ```
 /// </details>
@@ -160,10 +161,8 @@ impl<'a> MarkdownBuilder<'a> {
             let section_name = section.name.as_deref().unwrap_or(self.default_section_name);
             writeln!(self.result).unwrap();
             writeln!(self.result, "## {section_name}").unwrap();
-            if !section.steps.is_empty() {
-                writeln!(self.result).unwrap();
-            }
             for step in &section.steps {
+                writeln!(self.result).unwrap();
                 writeln!(self.result, "{step}").unwrap();
             }
         }
