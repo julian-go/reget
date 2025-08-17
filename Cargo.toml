@@ -1,10 +1,13 @@
 [package]
 name = "reget"
-version = "0.2.0"
+version = "0.2.2"
 edition = "2024"
 description = "A simple recipe parser for html and json-ld with optional markdown support"
 repository = "https://github.com/julian-go/reget"
 license = "MIT"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [dependencies]
 scraper = "0.23.1"
