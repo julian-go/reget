@@ -1,6 +1,7 @@
 # reget
 [![Crates.io](https://img.shields.io/crates/v/reget)](https://crates.io/crates/reget)
-![License](https://img.shields.io/badge/license-MIT-blue) 
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![main](https://github.com/julian-go/reget/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/julian-go/reget/actions/workflows/rust.yml)
 
 A simple library for extracting a [recipe](src/model.rs) from HTML documents using structured data (JSON-LD) embedded within.
 
