@@ -33,3 +33,10 @@ pub type Ingredient = String;
 
 /// A single how-to-step of a recipe
 pub type HowToStep = String;
+
+impl Recipe {
+    #[cfg(feature = "markdown")]
+    pub fn to_markdown(&self) -> crate::MarkdownBuilder {
+        crate::MarkdownBuilder::from(self)
+    }
+}

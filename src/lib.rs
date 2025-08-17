@@ -29,9 +29,13 @@
 //! ```
 
 mod constants;
+#[cfg(feature = "markdown")]
+mod markdown;
 mod model;
 
 use constants::LdFields;
+#[cfg(feature = "markdown")]
+pub use markdown::MarkdownBuilder;
 pub use model::{HowToSection, HowToStep, Ingredient, Recipe};
 
 use scraper::{Html, Selector};
