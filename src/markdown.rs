@@ -7,6 +7,7 @@ use std::fmt::Write;
 /// ## Example
 ///
 /// ```
+/// let recipe = reget::Recipe::default();
 /// recipe
 ///     .to_markdown()
 ///     .with_url("https://example.org/recipe")
