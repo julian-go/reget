@@ -30,6 +30,7 @@
 //! let recipe = parse_recipe(html).unwrap();
 //!
 //! // And with the optional markdown feature    
+//! #[cfg(feature = "markdown")]
 //! let md = recipe
 //!     .to_markdown()
 //!     .with_url("https://example.org/recipe")
